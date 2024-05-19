@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputAction.h"
+#include <Components/TimelineComponent.h>
+#include "GameFramework/SpringArmComponent.h"
 #include "MyCharacter.generated.h"
 
 class UInputAction;
@@ -21,16 +23,29 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+protected:
+	void moveCamera(float targetArmLength, float targetSocketYOffset);
+	void stopCameraMovement();	
+	void resetCameraPosition();
+	UFUNCTION()
+	void moveCameraTimelineCallback(float value);
+
+	UFUNCTION(BlueprintPure)
+	bool isSprinting() const;
 
 private:
 	void move(const FInputActionValue& value);
 	void look(const FInputActionValue& value);
+	void sprintStart(const FInputActionValue& value);
+	void sprintStop(const FInputActionValue& value);
 	void moveRight(float axisVal);
 	void lookUp(float axisVal);
 	void lookRight(float axisVal);
@@ -45,7 +60,24 @@ protected:/*
 	UInputAction* moveAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enhanced Input")
 	UInputAction* lookAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enhanced Input")
+	UInputAction* sprintAction;
 
+	// camera logic
+	USpringArmComponent* springArmComponent;
+	UPROPERTY(EditAnywhere, Category = "Camera")
+	UCurveFloat* cameraFloatCurve;
+	FTimeline cameraTimeline;
+	float defaultArmLength;
+	float defaultSocketYOffset;
+	float targetArmLength;
+	float targetSocketYOffset;
+	float lastArmLength;
+	float lastSocketYOffset;
+
+	// sprint logic
+	bool bIsSprinting;
+	float sprintMultiplier;
 
 
 };
