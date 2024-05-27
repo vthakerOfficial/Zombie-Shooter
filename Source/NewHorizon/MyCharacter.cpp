@@ -2,10 +2,15 @@
 
 
 #include "MyCharacter.h"
-#include "InputDataConfig.h"
+//#include "InputDataConfig.h"
 #include "EnhancedInput/Public/EnhancedInputComponent.h"
 #include <EnhancedInputSubsystems.h>
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "Gun.h"
+#include "HorizonGameModeBase.h"
+#include "Kismet/GameplayStatics.h"
+
 #include <GameFramework/SpringArmComponent.h>
 
 // Sets default values
@@ -46,6 +51,18 @@ void AMyCharacter::BeginPlay()
 	}
 	bIsSprinting = false;
 	sprintMultiplier = 10.0f;
+
+	//attaching gun
+	isPlayer = Cast<APlayerController>(GetController()) != nullptr;
+	if (isPlayer) // is player controlled
+	{
+		gun = GetWorld()->SpawnActor<AGun>(gunClass);
+		gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, TEXT("weaponSocket"));
+		gun->SetOwner(this);
+	}
+
+	// setting up health
+	health = maxHealth;
 }
 
 void AMyCharacter::moveCamera(float newTargetArmLength, float newTargetSocketYOffset) {
@@ -103,16 +120,58 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		enhancedInput->BindAction(lookAction, ETriggerEvent::Triggered, this, &AMyCharacter::look);
 		enhancedInput->BindAction(sprintAction, ETriggerEvent::Started, this, &AMyCharacter::sprintStart);
 		enhancedInput->BindAction(sprintAction, ETriggerEvent::Completed, this, &AMyCharacter::sprintStop);
+		enhancedInput->BindAction(jumpAction, ETriggerEvent::Started, this, &AMyCharacter::doubleJump);
+		enhancedInput->BindAction(crouchAction, ETriggerEvent::Started, this, &AMyCharacter::crouchStart);
+		enhancedInput->BindAction(crouchAction, ETriggerEvent::Completed, this, &AMyCharacter::crouchStop);
+		enhancedInput->BindAction(shootAction, ETriggerEvent::Started, this, &AMyCharacter::shoot);
 	}
+}
+
+void AMyCharacter::Landed(const FHitResult& hit)
+{
+	Super::Landed(hit);
+	bIsFirstJump = true;
+	bCanDoubleJump = false;
+}
+
+float AMyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	float damageToApply = FMath::Min(DamageAmount, health);
+	health -= damageToApply;
+	if (isDead()) {
+		//GetMesh()->SetSimulatePhysics(true);
+		if (AHorizonGameModeBase* gameMode = GetWorld()->GetAuthGameMode<AHorizonGameModeBase>()) { // telling gamemode that we died
+			gameMode->pawnKilled(this);
+		}
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), deathParticles, GetActorTransform());
+		DetachFromControllerPendingDestroy();
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		//GetWorld()->GetTimerManager().SetTimer(deathTimerHandle, this, &AMyCharacter::destroySelf, 3.0f, false);
+		if (!isPlayer) {
+			Destroy();
+		}
+		//if (isPlayer) {
+		//	UE_LOG(LogTemp, Display, TEXT("Player died--------------------------------------------------------------"));
+		//}
+		//else { // is ai
+		//	//GetCharacterMovement()->DisableMovement();
+		//	UE_LOG(LogTemp, Display, TEXT("ai died-------------------------------------------------"));
+		//}
+	}
+
+	return damageToApply;
+}
+
+bool AMyCharacter::isDead() const
+{
+	return health == 0;
 }
 
 
 void AMyCharacter::move(const FInputActionValue& value)
 {
-	//UE_LOG(LogTemp, Display, TEXT("Moving yawn"));
 	const FVector2d moveVector = value.Get<FVector2d>();
 
-	//UPawnMovementComponent* comp = GetMovementComponent();
 
 	FRotator curRotation = Controller->GetControlRotation();
 	FRotator yawRotation(0.f, curRotation.Yaw, 0.f);
@@ -121,18 +180,6 @@ void AMyCharacter::move(const FInputActionValue& value)
 	AddMovementInput(forwardDirection, moveVector.Y);
 	FVector rightDirection = FRotationMatrix(yawRotation).GetUnitAxis(EAxis::Y);
 	AddMovementInput(rightDirection, moveVector.X);
-	//UE_LOG(LogTemp, Display, TEXT("Player Velocity: %s"), GetVelocity().ToString());
-	//if (moveVector.GetAbs().X > .05f) { // avoid accidental movement on faulty controller
-
-	//	AddMovementInput(GetActorForwardVector() * moveVector.X);
-	//}
-	//// if movement is 
-	//if (moveVector.GetAbs().Y > .05f) {
-	//	//const FVector directionVector = moveRotation.RotateVector(FVector::ForwardVector);
-	//	//UE_LOG(LogTemp, Display, TEXT("C"));
-	//	//AddMovementInput()
-	//	AddMovementInput(GetActorRightVector() * moveVector.Y);
-	//}
 }
 void AMyCharacter::look(const FInputActionValue& value) {
 	//UE_LOG(LogTemp, Display, TEXT("Moving camera"));
@@ -144,9 +191,10 @@ void AMyCharacter::look(const FInputActionValue& value) {
 
 void AMyCharacter::sprintStart(const FInputActionValue& value)
 {
+	crouchStop();
 	bIsSprinting = true;
 	Cast<UCharacterMovementComponent>(GetMovementComponent())->MaxWalkSpeed *= sprintMultiplier;
-	moveCamera(200, 20);
+	moveCamera(defaultArmLength*2, 20);
 }
 
 void AMyCharacter::sprintStop(const FInputActionValue& value)
@@ -156,22 +204,59 @@ void AMyCharacter::sprintStop(const FInputActionValue& value)
 	resetCameraPosition();
 }
 
-void AMyCharacter::moveRight(float axisVal)
-{
-	AddMovementInput(GetActorRightVector() * axisVal);
-}
-void AMyCharacter::lookUp(float axisVal)
-{
-	AddControllerPitchInput(axisVal);
-}
-
-void AMyCharacter::lookRight(float axisVal)
-{
-	AddControllerYawInput(axisVal);
-}
-void AMyCharacter::jump() {
-	//jump();
+void AMyCharacter::doubleJump() {
+	if (bIsFirstJump && GetCharacterMovement()->IsMovingOnGround()) {
+		ACharacter::Jump();
+		bIsFirstJump = false;
+		bCanDoubleJump = true;
+		UE_LOG(LogTemp, Display, TEXT("nOrmal jump"));
+	}
+	else if (bCanDoubleJump){ // double jump time!
+		FVector forwardDir = GetActorRotation().Vector();
+		LaunchCharacter(FVector(forwardDir.X * 6000, forwardDir.Y * 6000, 1500), true, true);
+		bCanDoubleJump = false;
+		UE_LOG(LogTemp, Display, TEXT("double jump"));
+	}
 }
 
+void AMyCharacter::crouchStart() {
+	if (bIsCrouching) return;
+	if (UCharacterMovementComponent* moveComp = Cast<UCharacterMovementComponent>(GetMovementComponent())) {
+		moveComp->MaxWalkSpeed /= 2;
+	}
+	auto capsuleComp = GetCapsuleComponent();
+	//capsuleComp->SetCapsuleHalfHeight(capsuleComp->GetUnscaledCapsuleHalfHeight() / 2);
+	ACharacter::Crouch();
+	bIsCrouching = true;
+}
+void AMyCharacter::crouchStop() {
+	if (!bIsCrouching) return;
+	if (UCharacterMovementComponent* moveComp = Cast<UCharacterMovementComponent>(GetMovementComponent())) {
+		moveComp->MaxWalkSpeed *= 2;
+	}
+	auto capsuleComp = GetCapsuleComponent();
+	//capsuleComp->SetCapsuleHalfHeight(capsuleComp->GetUnscaledCapsuleHalfHeight() * 2);
+	ACharacter::UnCrouch();
+	bIsCrouching = false;
+}
+
+void AMyCharacter::destroySelf()
+{
+	Destroy();
+}
+
+void AMyCharacter::shoot()
+{
+	gun->shoot();
+}
+
+void AMyCharacter::lunge() {
+
+}
+
+float AMyCharacter::getHealthAsPercent() const
+{
+	return health / maxHealth;
+}
 
 

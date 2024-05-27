@@ -31,6 +31,14 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	virtual void Landed(const FHitResult& hit);
+
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	UFUNCTION(BlueprintPure) bool isDead() const;
+	void shoot();
+	void lunge();
+	UFUNCTION(BlueprintPure) float getHealthAsPercent() const;
 protected:
 	void moveCamera(float targetArmLength, float targetSocketYOffset);
 	void stopCameraMovement();	
@@ -46,22 +54,27 @@ private:
 	void look(const FInputActionValue& value);
 	void sprintStart(const FInputActionValue& value);
 	void sprintStop(const FInputActionValue& value);
-	void moveRight(float axisVal);
-	void lookUp(float axisVal);
-	void lookRight(float axisVal);
-	void jump();
+	void doubleJump();
+	void crouchStart();
+	void crouchStop();
+	void destroySelf();
 
-protected:/*
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "EnhancedInput")
-	class UInputDataConfig* inputActions;*/ 
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enhanced Input")
 	class UInputMappingContext* inputMappingContext;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enhanced Input")
 	UInputAction* moveAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enhanced Input")
 	UInputAction* lookAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enhanced Input")
 	UInputAction* sprintAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enhanced Input")
+	UInputAction* jumpAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enhanced Input")
+	UInputAction* crouchAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enhanced Input")
+	UInputAction* shootAction;
 
 	// camera logic
 	USpringArmComponent* springArmComponent;
@@ -78,7 +91,32 @@ protected:/*
 	// sprint logic
 	bool bIsSprinting;
 	float sprintMultiplier;
+	
+	// double jump logic
+	bool bIsFirstJump = true;
+	bool bCanDoubleJump = false;
+
+	// crouch logic (not needed bcuz move comp alr got it)
+	UPROPERTY(BlueprintReadOnly) bool bIsCrouching = false; 
 
 
+	// attaching gun 
+	UPROPERTY(EditDefaultsOnly, Category = "Combat") TSubclassOf<class AGun> gunClass;
+
+	UPROPERTY() class AGun* gun;
+
+	// setting up health
+	UPROPERTY(EditDefaultsOnly, Category = "Combat") float maxHealth = 100;
+	float health;
+
+	// death timer handle
+	FTimerHandle deathTimerHandle;
+
+	// particles
+	UPROPERTY(EditAnywhere) UParticleSystem* deathParticles;
+	//UPROPERTY(EditAnywhere) USoundBase* attack;
+
+private:
+	bool isPlayer;
 };
 
