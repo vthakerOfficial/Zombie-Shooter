@@ -185,7 +185,7 @@ void AMyCharacter::look(const FInputActionValue& value) {
 	//UE_LOG(LogTemp, Display, TEXT("Moving camera"));
 	FVector2d rotationVector = value.Get<FVector2d>();
 	AddControllerYawInput(rotationVector.X);
-	AddControllerPitchInput(rotationVector.Y);
+	AddControllerPitchInput(-rotationVector.Y);
 	//UE_LOG(LogTemp, Display, TEXT("rotationVectr: (%f, %f)"), rotationVector.X, rotationVector.Y);
 }
 
@@ -213,7 +213,7 @@ void AMyCharacter::doubleJump() {
 	}
 	else if (bCanDoubleJump){ // double jump time!
 		FVector forwardDir = GetActorRotation().Vector();
-		LaunchCharacter(FVector(forwardDir.X * 6000, forwardDir.Y * 6000, 1500), true, true);
+		LaunchCharacter(FVector(forwardDir.X * 3000, forwardDir.Y * 1000, 1000), true, true);
 		bCanDoubleJump = false;
 		UE_LOG(LogTemp, Display, TEXT("double jump"));
 	}
