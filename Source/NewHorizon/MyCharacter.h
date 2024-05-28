@@ -59,6 +59,9 @@ private:
 	void crouchStop();
 	void destroySelf();
 
+	void startShootTimer();
+	void stopShootTimer();
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enhanced Input")
 	class UInputMappingContext* inputMappingContext;
@@ -115,6 +118,10 @@ protected:
 	// particles
 	UPROPERTY(EditAnywhere) UParticleSystem* deathParticles;
 	//UPROPERTY(EditAnywhere) USoundBase* attack;
+
+	// shooting stuff
+	FTimerHandle shootTimerHandle;
+	UPROPERTY(EditDefaultsOnly, Category = "Combat") float shootDelay = .1;
 
 private:
 	bool isPlayer;
