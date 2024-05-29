@@ -9,24 +9,16 @@ void AHorizonPlayerController::GameHasEnded(AActor* EndGameFocus, bool bIsWinner
 {
 	Super::GameHasEnded(EndGameFocus, bIsWinner);
 	//UE_LOG(LogTemp, Display, TEXT("GameHasEnded has been called"));
-	
+	UUserWidget* screen;
 	if (bIsWinner) {
-		tempScreen = CreateWidget(this, scoreScreenClass);
-		GetWorldTimerManager().SetTimer(removeWidgetTimerHandle, this, &AHorizonPlayerController::removeWidget, restartDelay);
+		screen = CreateWidget(this, scoreScreenClass);
 	}
 	else {
-		tempScreen = CreateWidget(this, gameOverScreenClass);
-		GetWorldTimerManager().SetTimer(restartTimerHandle, this, &APlayerController::RestartLevel, restartDelay * 2.0f);
+		screen = CreateWidget(this, gameOverScreenClass);
 	}
-	if (tempScreen) {
-		tempScreen->AddToViewport();
+	if (screen) {
+		screen->AddToViewport();
 	}
 
-}
-
-void AHorizonPlayerController::removeWidget()
-{
-	if (tempScreen) {
-		tempScreen->RemoveFromViewport();
-	}
+	GetWorldTimerManager().SetTimer(restartTimerHandle, this, &APlayerController::RestartLevel, restartDelay * 2.0f);
 }

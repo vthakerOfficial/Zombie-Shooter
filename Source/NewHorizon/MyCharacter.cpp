@@ -10,7 +10,6 @@
 #include "Gun.h"
 #include "HorizonGameModeBase.h"
 #include "Kismet/GameplayStatics.h"
-#include "GameFramework/Actor.h"
 
 #include <GameFramework/SpringArmComponent.h>
 
@@ -124,9 +123,7 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		enhancedInput->BindAction(jumpAction, ETriggerEvent::Started, this, &AMyCharacter::doubleJump);
 		enhancedInput->BindAction(crouchAction, ETriggerEvent::Started, this, &AMyCharacter::crouchStart);
 		enhancedInput->BindAction(crouchAction, ETriggerEvent::Completed, this, &AMyCharacter::crouchStop);
-		enhancedInput->BindAction(shootAction, ETriggerEvent::Started, this, &AMyCharacter::startShootTimer);
-		enhancedInput->BindAction(shootAction, ETriggerEvent::Completed, this, &AMyCharacter::stopShootTimer);
-
+		enhancedInput->BindAction(shootAction, ETriggerEvent::Started, this, &AMyCharacter::shoot);
 	}
 }
 
@@ -248,20 +245,8 @@ void AMyCharacter::destroySelf()
 	Destroy();
 }
 
-void AMyCharacter::startShootTimer()
-{
-	UE_LOG(LogTemp, Display, TEXT("Started timer"));
-	GetWorld()->GetTimerManager().SetTimer(shootTimerHandle, this, &AMyCharacter::shoot, shootDelay, true, 0);
-}
-void AMyCharacter::stopShootTimer()
-{
-	UE_LOG(LogTemp, Display, TEXT("Stopped timer"));
-
-	GetWorld()->GetTimerManager().ClearTimer(shootTimerHandle);
-}
 void AMyCharacter::shoot()
 {
-	UE_LOG(LogTemp, Display, TEXT("we shot"));
 	gun->shoot();
 }
 
