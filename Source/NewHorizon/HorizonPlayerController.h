@@ -21,4 +21,5 @@ private:
 	float restartDelay = 3;
 	FTimerHandle restartTimerHandle;
 	UPROPERTY(EditAnywhere) TSubclassOf<class UUserWidget> scoreScreenClass;
+	UPROPERTY(EditAnywhere) TSubclassOf<class UUserWidget> gameOverScreenClass;
 };
