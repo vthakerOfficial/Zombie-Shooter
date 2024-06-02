@@ -37,7 +37,10 @@ public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	UFUNCTION(BlueprintPure) bool isDead() const;
 	void shoot();
+	void shootStart();
+	void shootEnd();
 	void lunge();
+	void resetHealth();
 	UFUNCTION(BlueprintPure) float getHealthAsPercent() const;
 protected:
 	void moveCamera(float targetArmLength, float targetSocketYOffset);
@@ -114,8 +117,11 @@ protected:
 
 	// particles
 	UPROPERTY(EditAnywhere) UParticleSystem* deathParticles;
-	//UPROPERTY(EditAnywhere) USoundBase* attack;
+	//UPROPERTY(EditAnywhere) USoundBase* muzzleSound;
 
+	// shooting 
+	FTimerHandle shootTimerHandle;
+	UPROPERTY(EditDefaultsOnly, Category = "Combat") float shootDelay = .1f;
 private:
 	bool isPlayer;
 };

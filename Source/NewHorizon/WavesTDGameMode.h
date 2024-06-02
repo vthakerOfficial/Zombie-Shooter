@@ -31,5 +31,6 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Blueprint Class") TSubclassOf<AActor> spawnZombiesBPClass;
 
 	FTimerHandle spawnZombiesTimerHandle;
+	UPROPERTY(EditAnywhere, Category = "Spawning") float spawnMultiplier = 3.0f;
 	
 };

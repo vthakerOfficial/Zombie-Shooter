@@ -3,6 +3,7 @@
 
 #include "ZombieSpawner.h"
 #include "MyCharacter.h"
+#include "NavigationSystem.h"
 
 // Sets default values
 AZombieSpawner::AZombieSpawner()
@@ -30,7 +31,16 @@ void AZombieSpawner::spawnEnemy(int32 amt)
 {
 	UWorld* world = GetWorld();
 	for (int32 i = 0; i < amt; i++) {
-		AMyCharacter* enemy = world->SpawnActor<AMyCharacter>(enemyClass, RootComponent->GetComponentLocation(), RootComponent->GetComponentRotation());
+		FVector actorLocation = RootComponent->GetComponentLocation();
+		auto navSystem = UNavigationSystemV1::GetNavigationSystem(GetWorld());
+		FNavLocation navLocation;
+		navSystem->GetRandomPointInNavigableRadius(actorLocation, spawnRadius, navLocation);
+		//bool bSuccess = navSystem.GetRandomReachablePointInRadius()
+		//	K2_GetRandomPointInNavigableRadius
+		//	UNavigationSystemV1::GetRandomPointInNavigableRadius(actorLocation, 1000.0f, spawnLocation);
+		//bool bSuccess = UNavigationSystemV1::GetRandomReachablePointInRadius(actorLocation, 1000.0f, spawnLocation);
+		//SpawnActor
+		AMyCharacter* enemy = world->SpawnActor<AMyCharacter>(enemyClass, navLocation.Location, RootComponent->GetComponentRotation());
 	}
 }
 

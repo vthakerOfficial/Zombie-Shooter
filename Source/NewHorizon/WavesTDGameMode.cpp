@@ -6,6 +6,7 @@
 #include "ZombieAIController.h"
 #include <Misc/OutputDeviceNull.h>
 #include "ZombieSpawner.h"
+#include "MyCharacter.h"
 
 void AWavesTDGameMode::pawnKilled(APawn* pawnKilled)
 {
@@ -19,6 +20,13 @@ void AWavesTDGameMode::pawnKilled(APawn* pawnKilled)
 			if (!controller->isDead()) return;
 		}
 		numRoundsSurvived++;
+		for (TActorIterator<AMyCharacter> it(GetWorld()); it; ++it) {
+			AMyCharacter* player = *it;
+			if (!it) continue;
+			//UE_LOG(LogTemp, Display, TEXT("FOUND EM"));
+			it->resetHealth();
+			//break;
+		}
 		endGame(true);
 		GetWorldTimerManager().SetTimer(spawnZombiesTimerHandle, this, &AWavesTDGameMode::spawnZombies, 4.0f);
 		
@@ -59,12 +67,12 @@ void AWavesTDGameMode::spawnZombies() {
 	//int32 numZombies = 2.0f * FMath::Pow(2.0f, numRoundsSurvived);
 	//FOutputDeviceNull ar;
 	//CallFunctionByNameWithArguments(TEXT("MySpawnZombies 5"), ar, NULL, true);
-	UE_LOG(LogTemp, Display, TEXT("Spawning"));
+	//UE_LOG(LogTemp, Display, TEXT("Spawning"));
 	for (TActorIterator<AZombieSpawner> it(GetWorld()); it; ++it) {
 		AZombieSpawner* spawner = *it;
 		if (!it) continue;
-		UE_LOG(LogTemp, Display, TEXT("FOUND EM"));
-		it->spawnEnemy(2.0f * FMath::Pow(2.0f, numRoundsSurvived));
+		//UE_LOG(LogTemp, Display, TEXT("FOUND EM"));
+		it->spawnEnemy(2.0f * FMath::Pow(spawnMultiplier, numRoundsSurvived));
 		//break;
 	}
 	/*if (AActor* foundActor = UGameplayStatics::GetActorOfClass(GetWorld(), TSubclassOf<AZombieSpawner>())) {

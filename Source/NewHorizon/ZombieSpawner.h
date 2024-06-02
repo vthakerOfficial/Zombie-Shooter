@@ -29,4 +29,5 @@ public:
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "Spawning") TSubclassOf<class AMyCharacter> enemyClass;
+	UPROPERTY(EditAnywhere, Category = "Spawning") double spawnRadius = 5000;
 };

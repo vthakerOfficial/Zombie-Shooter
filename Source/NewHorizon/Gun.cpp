@@ -4,6 +4,7 @@
 #include "Gun.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/DamageEvents.h"
+#include "MyCharacter.h"
 
 // Sets default values
 AGun::AGun()
@@ -27,7 +28,6 @@ void AGun::BeginPlay()
 
 void AGun::shoot() {
 	UGameplayStatics::SpawnEmitterAttached(muzzleFlash, mesh, TEXT("muzzleFlashSocket"));
-	//UGameplayStatics::SpawnSoundAttached(muzzleSou	nd, mesh, TEXT("muzzleFlashSocket"));
 
 	FHitResult hitResult;
 	FVector shotDirection;
@@ -35,14 +35,23 @@ void AGun::shoot() {
 	if (bHitSomething)
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), impactParticles, hitResult.Location, shotDirection.Rotation());
-		UGameplayStatics::SpawnSoundAtLocation(GetWorld(), impactSound, hitResult.Location, shotDirection.Rotation());
 
 		AActor* hitActor = hitResult.GetActor();
 		if (hitActor)
 		{
+			if (Cast<AMyCharacter>(hitActor)) { // if zombie
+				UGameplayStatics::SpawnSoundAtLocation(GetWorld(), impactSound, hitResult.Location, shotDirection.Rotation());
+			}
+			else {
+
+				UGameplayStatics::SpawnSoundAttached(muzzleSound, mesh, TEXT("muzzleFlashSocket"));
+			}
 			FPointDamageEvent damageEvent(damage, hitResult, shotDirection, nullptr);
 			hitActor->TakeDamage(damage, damageEvent, getOwnerController(), this);
 		}
+	}
+	else {
+		UGameplayStatics::SpawnSoundAttached(muzzleSound, mesh, TEXT("muzzleFlashSocket"));
 	}
 }
 

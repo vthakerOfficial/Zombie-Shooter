@@ -123,7 +123,8 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		enhancedInput->BindAction(jumpAction, ETriggerEvent::Started, this, &AMyCharacter::doubleJump);
 		enhancedInput->BindAction(crouchAction, ETriggerEvent::Started, this, &AMyCharacter::crouchStart);
 		enhancedInput->BindAction(crouchAction, ETriggerEvent::Completed, this, &AMyCharacter::crouchStop);
-		enhancedInput->BindAction(shootAction, ETriggerEvent::Started, this, &AMyCharacter::shoot);
+		enhancedInput->BindAction(shootAction, ETriggerEvent::Started, this, &AMyCharacter::shootStart);
+		enhancedInput->BindAction(shootAction, ETriggerEvent::Completed, this, &AMyCharacter::shootEnd);
 	}
 }
 
@@ -148,6 +149,9 @@ float AMyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEve
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		//GetWorld()->GetTimerManager().SetTimer(deathTimerHandle, this, &AMyCharacter::destroySelf, 3.0f, false);
 		if (!isPlayer) {
+			Destroy();
+		}
+		else {
 			Destroy();
 		}
 		//if (isPlayer) {
@@ -213,7 +217,7 @@ void AMyCharacter::doubleJump() {
 	}
 	else if (bCanDoubleJump){ // double jump time!
 		FVector forwardDir = GetActorRotation().Vector();
-		LaunchCharacter(FVector(forwardDir.X * 6000, forwardDir.Y * 6000, 1500), true, true);
+		LaunchCharacter(FVector(forwardDir.X * 2000, forwardDir.Y * 2000, 1000), true, true);
 		bCanDoubleJump = false;
 		UE_LOG(LogTemp, Display, TEXT("double jump"));
 	}
@@ -250,8 +254,23 @@ void AMyCharacter::shoot()
 	gun->shoot();
 }
 
+void AMyCharacter::shootStart()
+{
+	GetWorld()->GetTimerManager().SetTimer(shootTimerHandle, this, &AMyCharacter::shoot, shootDelay, true, 0);
+}
+
+void AMyCharacter::shootEnd()
+{
+	GetWorld()->GetTimerManager().ClearTimer(shootTimerHandle);
+}
+
 void AMyCharacter::lunge() {
 
+}
+
+void AMyCharacter::resetHealth()
+{
+	health = maxHealth;
 }
 
 float AMyCharacter::getHealthAsPercent() const

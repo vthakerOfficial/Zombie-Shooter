@@ -33,6 +33,7 @@ public:
 	UPROPERTY(VisibleAnywhere) UStaticMeshComponent* mesh;
 private:
 	UPROPERTY(EditAnywhere) UParticleSystem* muzzleFlash;
+	UPROPERTY(EditAnywhere) USoundBase* muzzleSound;
 	UPROPERTY(EditAnywhere) UParticleSystem* impactParticles;
 	UPROPERTY(EditAnywhere) USoundBase* impactSound;
 	UPROPERTY(EditAnywhere) float maxRange = 50000;
