@@ -188,8 +188,8 @@ void AMyCharacter::move(const FInputActionValue& value)
 void AMyCharacter::look(const FInputActionValue& value) {
 	//UE_LOG(LogTemp, Display, TEXT("Moving camera"));
 	FVector2d rotationVector = value.Get<FVector2d>();
-	AddControllerYawInput(rotationVector.X);
-	AddControllerPitchInput(rotationVector.Y);
+	AddControllerYawInput(rotationVector.X*mouseSens);
+	AddControllerPitchInput(rotationVector.Y*mouseSens);
 	//UE_LOG(LogTemp, Display, TEXT("rotationVectr: (%f, %f)"), rotationVector.X, rotationVector.Y);
 }
 

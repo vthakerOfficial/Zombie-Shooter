@@ -124,5 +124,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Combat") float shootDelay = .1f;
 private:
 	bool isPlayer;
+	UPROPERTY(EditAnywhere, Category = "Input") float mouseSens = .25f;
 };
 
